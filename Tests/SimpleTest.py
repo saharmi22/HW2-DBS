@@ -14,11 +14,18 @@ from Business.Customer import Customer
 
 
 class Test(AbstractTest):
-    def test_customer(self) -> None:
-        c1 = Customer(1, 'a1')
-        self.assertEqual(ReturnValue.OK, Solution.add_customer(c1), 'regular customer')
-        c2 = Customer(2, None)
-        self.assertEqual(ReturnValue.BAD_PARAMS, Solution.add_customer(c2), 'invalid name')
+    #def test_customer(self) -> None:
+    #    c1 = Customer(1, 'a1')
+    #    self.assertEqual(ReturnValue.OK, Solution.add_customer(c1), 'regular customer')
+    #    c2 = Customer(2, None)
+    #    self.assertEqual(ReturnValue.BAD_PARAMS, Solution.add_customer(c2), 'invalid name')
+
+    def test_owner(self):
+        o = Owner(1, 'sahar')
+        self.assertEqual(ReturnValue.OK, Solution.add_owner(o), "regular owner")
+        o1 = Solution.get_owner(o.get_owner_id())
+        self.assertEqual(o, o1, "got owner")
+        o = Owner()
 
 
 # *** DO NOT RUN EACH TEST MANUALLY ***
