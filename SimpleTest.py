@@ -27,6 +27,13 @@ class Test(AbstractTest):
         self.assertEqual(o, o1, "got owner")
         o = Owner()
 
+    def test_apartment(self):
+        a = Apartment(1,"ABC","CITY","SYR",23)
+        self.assertEqual(ReturnValue.OK, Solution.add_apartment(a), "regular apartment")
+        a1 = Solution.get_apartment(a.get_id())
+        self.assertEqual(a, a1, "got apartment")
+        a = Apartment(1,"ABC","CITY","SYR",23)
+        self.assertEqual(ReturnValue.ALREADY_EXISTS, Solution.add_apartment(a), "exists")
 
 # *** DO NOT RUN EACH TEST MANUALLY ***
 if __name__ == '__main__':

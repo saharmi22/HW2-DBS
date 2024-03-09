@@ -10,5 +10,3 @@ class AbstractTest(unittest.TestCase):
     # after each test, tearDown is executed
     def tearDown(self) -> None:
         Solution.drop_tables()
-
-
