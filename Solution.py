@@ -36,8 +36,8 @@ def create_tables():
                      "start_date DATE,"
                      "end_date DATE,"
                      "total_price INTEGER,"
-                     "FOREIGN KEY (costumer_id) REFERENCES Costumers(id),"
-                     "FOREIGN KEY (apartment_id) REFERENCES Apartments(id),"
+                     "FOREIGN KEY (costumer_id) REFERENCES Costumers(id) ON DELETE CASCADE,"
+                     "FOREIGN KEY (apartment_id) REFERENCES Apartments(id) ON DELETE CASCADE,"
                      "PRIMARY KEY (costumer_id, apartment_id, start_date),"
                      "CHECK (total_price>0))")
         conn.execute("CREATE TABLE Reviews(costumer_id INTEGER,"
@@ -45,15 +45,15 @@ def create_tables():
                      "review_date DATE,"
                      "rating INTEGER,"
                      "review_text TEXT,"
-                     "FOREIGN KEY (costumer_id) REFERENCES Costumers(id),"
-                     "FOREIGN KEY (apartment_id) REFERENCES Apartments(id),"
+                     "FOREIGN KEY (costumer_id) REFERENCES Costumers(id) ON DELETE CASCADE,"
+                     "FOREIGN KEY (apartment_id) REFERENCES Apartments(id) ON DELETE CASCADE,"
                      "PRIMARY KEY (costumer_id, apartment_id),"
                      "CHECK (rating >= 1),"
                      "CHECK (rating <= 10))")
         conn.execute("CREATE TABLE Owns(owner_id INTEGER, "
                      "apartment_id INTEGER,"
-                     "FOREIGN KEY (owner_id) REFERENCES Owners(id),"
-                     "FOREIGN KEY (apartment_id) REFERENCES Apartments(id),"
+                     "FOREIGN KEY (owner_id) REFERENCES Owners(id) ON DELETE CASCADE,"
+                     "FOREIGN KEY (apartment_id) REFERENCES Apartments(id) ON DELETE CASCADE,"
                      "PRIMARY KEY (apartment_id))")
     except Exception as e:
         print(e)
@@ -133,6 +133,7 @@ def delete_owner(owner_id: int) -> ReturnValue:
     ret_val = ReturnValue.OK
     try:
         conn = Connector.DBConnector()
+        # won't delete relevant apartments!
         conn.execute("DELETE FROM Owners WHERE id=" + str(owner_id))
     except DatabaseException.NOT_NULL_VIOLATION as e:
         print(e)
@@ -154,94 +155,249 @@ def delete_owner(owner_id: int) -> ReturnValue:
         return ret_val
 
 
-#todo: lior
+# todo: lior
 def add_apartment(apartment: Apartment) -> ReturnValue:
     pass
 
-#todo: lior
+
+# todo: lior
 def get_apartment(apartment_id: int) -> Apartment:
     # TODO: implement
     pass
 
-#todo: lior
+
+# todo: lior
 def delete_apartment(apartment_id: int) -> ReturnValue:
     # TODO: implement
     pass
 
-#todo: sahar
+
+# todo: sahar
 def add_customer(customer: Customer) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    ret_val = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        conn.execute("INSERT INTO Costumers VALUES (" + str(Customer.get_customer_id()) + ", '"
+                     + customer.get_customer_name() + "')")
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.ALREADY_EXISTS
+    except Exception as e:
+        print(e)
+        ret_val = ReturnValue.ERROR
+    finally:
+        conn.close()
+        return ret_val
 
-#todo: sahar
+
+# todo: sahar
 def get_customer(customer_id: int) -> Customer:
-    # TODO: implement
-    pass
+    conn = None
+    owner = Owner.bad_owner()
+    try:
+        conn = Connector.DBConnector()
+        n, res = conn.execute("SELECT name FROM Costumers WHERE id=" + str(customer_id))
+        if res.size() > 0:
+            owner = Owner(customer_id, res[0]["name"])
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return owner
 
-#todo: sahar
+
+# todo: sahar
 def delete_customer(customer_id: int) -> ReturnValue:
+    conn = None
+    ret_val = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        conn.execute("DELETE FROM Costumers WHERE id=" + str(customer_id))
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.ALREADY_EXISTS
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.NOT_EXISTS
+    except Exception as e:
+        print(e)
+        ret_val = ReturnValue.ERROR
+    finally:
+        conn.close()
+        return ret_val
+
+
+# todo: lior
+def customer_made_reservation(customer_id: int, apartment_id: int, start_date: date, end_date: date,
+                              total_price: float) -> ReturnValue:
     # TODO: implement
     pass
 
-#todo: lior
-def customer_made_reservation(customer_id: int, apartment_id: int, start_date: date, end_date: date, total_price: float) -> ReturnValue:
-    # TODO: implement
-    pass
 
-#todo: sahar
+# todo: sahar
 def customer_cancelled_reservation(customer_id: int, apartment_id: int, start_date: date) -> ReturnValue:
+    conn = None
+    ret_val = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        conn.execute("DELETE FROM Reservations WHERE costumer_id=" + str(customer_id) +
+                     "AND apartment_id=" + str(apartment_id) +
+                     "AND start_date=" + (start_date.strftime('%Y-%m-%d')))
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.ALREADY_EXISTS
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.NOT_EXISTS
+    except Exception as e:
+        print(e)
+        ret_val = ReturnValue.ERROR
+    finally:
+        conn.close()
+        return ret_val
+
+
+# todo: lior
+def customer_reviewed_apartment(customer_id: int, apartment_id: int, review_date: date, rating: int,
+                                review_text: str) -> ReturnValue:
     # TODO: implement
     pass
 
-#todo: lior
-def customer_reviewed_apartment(customer_id: int, apartment_id: int, review_date: date, rating: int, review_text: str) -> ReturnValue:
-    # TODO: implement
-    pass
 
-#todo: sahar
-def customer_updated_review(customer_id: int, apartmetn_id: int, update_date: date, new_rating: int, new_text: str) -> ReturnValue:
-    # TODO: implement
-    pass
+# todo: sahar
+def customer_updated_review(customer_id: int, apartmetn_id: int, update_date: date, new_rating: int,
+                            new_text: str) -> ReturnValue:
+    conn = None
+    ret_val = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        conn.execute("UPDATE Reviews"
+                              "SET review_date= CASE"
+                     "WHEN" + update_date.strftime('%Y-%m-%d') + "> review_date"
+                              ", rating=" + str(new_rating) + ", "
+                              "review_text=" + new_text +
+                              "WHERE costumer_id=" + str(customer_id) +
+                              "AND apartment_id=" + str(apartmetn_id))
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.NOT_EXISTS
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.NOT_EXISTS
+    except Exception as e:
+        print(e)
+        ret_val = ReturnValue.ERROR
+    finally:
+        conn.close()
+        return ret_val
 
-#todo: lior
+
+# todo: lior
 def owner_owns_apartment(owner_id: int, apartment_id: int) -> ReturnValue:
     # TODO: implement
     pass
 
-#todo: sahar
-def owner_drops_apartment(owner_id: int, apartment_id: int) -> ReturnValue:
-    # TODO: implement
-    pass
 
-#todo: lior
+# todo: sahar
+def owner_drops_apartment(owner_id: int, apartment_id: int) -> ReturnValue:
+    conn = None
+    ret_val = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        if owner_id < 0:
+            return ReturnValue.BAD_PARAMS
+        # why do I need owner_id?
+        conn.execute("DELETE FROM Apartments WHERE apartment_id=" + str(apartment_id))
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.NOT_EXISTS
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.NOT_EXISTS
+    except Exception as e:
+        print(e)
+        ret_val = ReturnValue.ERROR
+    finally:
+        conn.close()
+        return ret_val
+
+
+# todo: lior
 def get_apartment_owner(apartment_id: int) -> Owner:
     # TODO: implement
     pass
 
-#todo: sahar
+
+# todo: sahar
 def get_owner_apartments(owner_id: int) -> List[Apartment]:
-    # TODO: implement
-    pass
+    conn = None
+    apartments = []
+    try:
+        conn = Connector.DBConnector()
+        _, res = conn.execute("SELECT id, address, city, country, size"
+                              "FROM Owns, Apartments"
+                              "WHERE owner_id=" + str())
+        for row in res:
+            apartments.append(Apartment(res["id"], res["address"], res["city"], res["country"], res["size"]))
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return apartments
 
 
 # ---------------------------------- BASIC API: ----------------------------------
 
-#todo: lior
+# todo: lior
 def get_apartment_rating(apartment_id: int) -> float:
     # TODO: implement
     pass
 
-#todo: sahar
+
+# todo: sahar
 def get_owner_rating(owner_id: int) -> float:
     # TODO: implement
     pass
 
-#todo: lior
+
+# todo: lior
 def get_top_customer() -> Customer:
     # TODO: implement
     pass
 
-#todo: sahar
+
+# todo: sahar
 def reservations_per_owner() -> List[Tuple[str, int]]:
     # TODO: implement
     pass
@@ -249,22 +405,25 @@ def reservations_per_owner() -> List[Tuple[str, int]]:
 
 # ---------------------------------- ADVANCED API: ----------------------------------
 
-#todo: lior
+# todo: lior
 def get_all_location_owners() -> List[Owner]:
     # TODO: implement
     pass
 
-#todo: sahar
+
+# todo: sahar
 def best_value_for_money() -> Apartment:
     # TODO: implement
     pass
 
-#todo: lior
+
+# todo: lior
 def profit_per_month(year: int) -> List[Tuple[int, float]]:
     # TODO: implement
     pass
 
-#todo: sahar
+
+# todo: sahar
 def get_apartment_recommendation(customer_id: int) -> List[Tuple[Apartment, float]]:
     # TODO: implement
     pass
