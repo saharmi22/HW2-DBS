@@ -1,7 +1,6 @@
 from typing import List, Tuple
 from psycopg2 import sql
 from datetime import date, datetime
-
 import Utility.DBConnector as Connector
 from Utility.ReturnValue import ReturnValue
 from Utility.Exceptions import DatabaseException
@@ -246,21 +245,71 @@ def delete_apartment(apartment_id: int) -> ReturnValue:
         conn.close()
         return ret_val
 
-#todo: sahar
+# todo: sahar
 def add_customer(customer: Customer) -> ReturnValue:
-    # TODO: implement
-    pass
+    conn = None
+    ret_val = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        conn.execute("INSERT INTO Costumers VALUES (" + str(customer.get_customer_id()) + ", '"
+                     + customer.get_customer_name() + "')")
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.ALREADY_EXISTS
+    except Exception as e:
+        print(e)
+        ret_val = ReturnValue.ERROR
+    finally:
+        conn.close()
+        return ret_val
 
-#todo: sahar
+
+# todo: sahar
 def get_customer(customer_id: int) -> Customer:
-    # TODO: implement
-    pass
+    conn = None
+    owner = Owner.bad_owner()
+    try:
+        conn = Connector.DBConnector()
+        n, res = conn.execute("SELECT name FROM Costumers WHERE id=" + str(customer_id))
+        if res.size() > 0:
+            owner = Owner(customer_id, res[0]["name"])
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return owner
 
 #todo: sahar
 def delete_customer(customer_id: int) -> ReturnValue:
-    # TODO: implement
-    pass
-
+    conn = None
+    ret_val = ReturnValue.OK
+    try:
+        conn = Connector.DBConnector()
+        conn.execute("DELETE FROM Costumers WHERE id=" + str(customer_id))
+    except DatabaseException.NOT_NULL_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.CHECK_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.BAD_PARAMS
+    except DatabaseException.UNIQUE_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.ALREADY_EXISTS
+    except DatabaseException.FOREIGN_KEY_VIOLATION as e:
+        print(e)
+        ret_val = ReturnValue.NOT_EXISTS
+    except Exception as e:
+        print(e)
+        ret_val = ReturnValue.ERROR
+    finally:
+        conn.close()
+        return ret_val
 #todo: lior
 def customer_made_reservation(customer_id: int, apartment_id: int, start_date: date, end_date: date, total_price: float) -> ReturnValue:
     # TODO: implement
@@ -451,16 +500,7 @@ def get_all_location_owners() -> List[Owner]:
                     "SELECT owner_id, name, COUNT(DISTINCT city) AS count "
                     "FROM ApartmentsOfOwner INNER JOIN Apartments "
                     "ON ApartmentsOfOwner.apartment_id = Apartments.id "
-                    "GROUP BY owner_id, name "
-                ") AS T GROUP BY owner_id, name  "
-                "HAVING T.count > ( "
-                    "SELECT MAX(apartment_count) "
-                    "FROM ( "
-                        "SELECT COUNT(DISTINCT city) AS apartment_count "
-                        "FROM ApartmentsOfOwner "
-                        "INNER JOIN Apartments ON ApartmentsOfOwner.apartment_id = Apartments.id "
-                        "GROUP BY owner_id "
-                    ") AS subquery );")
+                    "GROUP BY owner_id, name) AS T WHERE T.count = (SELECT COUNT(DISTINCT city) FROM Apartments ) ")
         for row in res:
             owners.append(Owner(row))
     except Exception as e:
@@ -477,28 +517,23 @@ def best_value_for_money() -> Apartment:
 #todo: lior
 def profit_per_month(year: int) -> List[Tuple[int, float]]:
     # TODO: implement
-    pass
+    conn= None
+    profits = [ 0.0 for _ in range(13)]
+    try:
+        conn = Connector.DBConnector()
+        n, res= conn.execute("SELECT EXTRACT(MONTH FROM end_date) AS month, 0.15 * SUM(total_price) AS profit "
+                             "FROM Reservations "
+                             "WHERE EXTRACT(YEAR FROM end_date) = " + str(year) + " "
+                             "GROUP BY EXTRACT(MONTH FROM end_date) ")
+        for row in res:
+            profits[int(row["month"])]= float(row["profit"])
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return list(enumerate(profits))[1:]
 
 #todo: sahar
-# In this query you will need to approximate what the given customer will rate an apartment
-# they haven’t been in, based on their and other users’ reviews.
-# You will use the following method for the approximation:
-# For every customer (other than the one you were given) that has reviewed an apartment the
-# given customer also reviewed (or multiple apartments), you will calculate the ratio between
-# their ratings (or the average of ratios if there is more than one apartment reviewed by both).
-# Then, for every customer you calculated a ratio for, the approximated ratio for an apartment
-# they reviewed would be the ratio multiplied by the rating they gave the other apartment. If
-# you get multiple approximations for the same apartment, return their average.
-# Generate an approximation for all apartments where it is possible.
-# Example: Itay reviewed apartment a1 and rated it 6 out of 10. Shir also reviewed apartment
-# a1 and rated it 3 out of 10. Shir also reviewed apartment a2 and rated it 2 out of 10. When
-# we run the query for Itay, the expected output would be the apartment a2 with a rating of 4.
-# This is because the ratio between Itay and Shir based on a1 is 2, and Shir rated a2 2 out of 10.
-# Multiplied by the ratio, we get an approximation of 4.
-# Input: customer_id: the id of the customer to get recommendations for
-# Output: A list of tuples of apartments and their projected rating. If the customer hasn’t
-# reviewed any apartments or doesn’t exist (or if for any other reason no approximations could
-# be calculated), return an empty list.
 def get_apartment_recommendation(customer_id: int) -> List[Tuple[Apartment, float]]:
     # TODO: implement
     pass
