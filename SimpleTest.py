@@ -35,6 +35,14 @@ class Test(AbstractTest):
         a = Apartment(1,"ABC","CITY","SYR",23)
         self.assertEqual(ReturnValue.ALREADY_EXISTS, Solution.add_apartment(a), "exists")
 
+    def test_mine(self):
+        o = Owner(1, 'lior')
+        self.assertEqual(ReturnValue.OK, Solution.add_owner(o), "regular owner")
+        a = Apartment(1,"ABC","CITY","SYR",23)
+        self.assertEqual(ReturnValue.OK, Solution.add_apartment(a), "regular apartment")
+        self.assertEqual(ReturnValue.OK, Solution.owner_owns_apartment(1,1), "regular owner owns apartment")
+        print(Solution.get_all_location_owners())
+
 # *** DO NOT RUN EACH TEST MANUALLY ***
 if __name__ == '__main__':
     unittest.main(verbosity=2, exit=False)

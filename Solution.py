@@ -59,6 +59,25 @@ def create_tables():
                      "FOREIGN KEY (owner_id) REFERENCES Owners(id),"
                      "FOREIGN KEY (apartment_id) REFERENCES Apartments(id),"
                      "PRIMARY KEY (apartment_id))")
+        conn.execute("CREATE VIEW Ratings AS "
+                     "SELECT Owns.owner_id, Owns.apartment_id, Reviews.rating "
+                     "FROM Owns INNER JOIN Reviews "
+                     "ON Owns.apartment_id = Reviews.apartment_id")
+        
+        conn.execute("CREATE VIEW ApartmentsOfOwner AS "
+                     "SELECT Owns.owner_id, Owns.apartment_id, Owners.name "
+                     "FROM Owners INNER JOIN Owns "
+                     "ON Owns.owner_id = Owners.id")
+
+        ## add view for owner , owns, reservations
+
+        ## add view for owner, owns , apartments
+
+        ## add view apartment, reviews
+
+        ## no view
+
+        ## 
     except Exception as e:
         print(e)
     finally:
@@ -84,6 +103,9 @@ def drop_tables():
     conn = None
     try:
         conn = Connector.DBConnector()
+        #conn.execute("DROP VIEW Owner_Citys")
+        conn.execute("DROP VIEW ApartmentsOfOwner")
+        conn.execute("DROP VIEW Ratings")
         conn.execute("DROP TABLE Owns")
         conn.execute("DROP TABLE Reviews")
         conn.execute("DROP TABLE Reservations")
@@ -371,6 +393,16 @@ def get_apartment_rating(apartment_id: int) -> float:
     # TODO: implement
     conn = None
     rating = 0
+    try:
+        conn = Connector.DBConnector()
+        n, res = conn.execute("SELECT AVG(rating) FROM Ratings WHERE apartment_id=" + str(apartment_id))
+        if res.size() > 0:
+            rating = res[0]["avg"]
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return rating
 
     
 
@@ -382,7 +414,22 @@ def get_owner_rating(owner_id: int) -> float:
 #todo: lior
 def get_top_customer() -> Customer:
     # TODO: implement
-    pass
+    conn= None
+    customer = Customer.bad_customer()
+    try:
+        conn = Connector.DBConnector()
+        n, res= conn.execute("Select owner_id, name "
+                             "FROM ApartmentsOfOwner INNER JOIN Reservations "
+                             "ON ApartmentsOfOwner.apartment_id = Reservations.apartment_id "
+                             "ORDER BY COUNT(Reservations.costumer_id) DESC, ApartmentsOfOwner.owner_id ASC")
+        if res.size() > 0:
+            customer = Customer(res[0])
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return customer
+
 
 #todo: sahar
 def reservations_per_owner() -> List[Tuple[str, int]]:
@@ -395,7 +442,32 @@ def reservations_per_owner() -> List[Tuple[str, int]]:
 #todo: lior
 def get_all_location_owners() -> List[Owner]:
     # TODO: implement
-    pass
+    conn= None
+    owners = []
+    try:
+        conn = Connector.DBConnector()
+        n, res= conn.execute("SELECT T.owner_id, T.name "
+                "FROM ( "
+                    "SELECT owner_id, name, COUNT(DISTINCT city) AS count "
+                    "FROM ApartmentsOfOwner INNER JOIN Apartments "
+                    "ON ApartmentsOfOwner.apartment_id = Apartments.id "
+                    "GROUP BY owner_id, name "
+                ") AS T GROUP BY owner_id, name  "
+                "HAVING T.count > ( "
+                    "SELECT MAX(apartment_count) "
+                    "FROM ( "
+                        "SELECT COUNT(DISTINCT city) AS apartment_count "
+                        "FROM ApartmentsOfOwner "
+                        "INNER JOIN Apartments ON ApartmentsOfOwner.apartment_id = Apartments.id "
+                        "GROUP BY owner_id "
+                    ") AS subquery );")
+        for row in res:
+            owners.append(Owner(row))
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        return owners
 
 #todo: sahar
 def best_value_for_money() -> Apartment:
@@ -408,6 +480,25 @@ def profit_per_month(year: int) -> List[Tuple[int, float]]:
     pass
 
 #todo: sahar
+# In this query you will need to approximate what the given customer will rate an apartment
+# they haven’t been in, based on their and other users’ reviews.
+# You will use the following method for the approximation:
+# For every customer (other than the one you were given) that has reviewed an apartment the
+# given customer also reviewed (or multiple apartments), you will calculate the ratio between
+# their ratings (or the average of ratios if there is more than one apartment reviewed by both).
+# Then, for every customer you calculated a ratio for, the approximated ratio for an apartment
+# they reviewed would be the ratio multiplied by the rating they gave the other apartment. If
+# you get multiple approximations for the same apartment, return their average.
+# Generate an approximation for all apartments where it is possible.
+# Example: Itay reviewed apartment a1 and rated it 6 out of 10. Shir also reviewed apartment
+# a1 and rated it 3 out of 10. Shir also reviewed apartment a2 and rated it 2 out of 10. When
+# we run the query for Itay, the expected output would be the apartment a2 with a rating of 4.
+# This is because the ratio between Itay and Shir based on a1 is 2, and Shir rated a2 2 out of 10.
+# Multiplied by the ratio, we get an approximation of 4.
+# Input: customer_id: the id of the customer to get recommendations for
+# Output: A list of tuples of apartments and their projected rating. If the customer hasn’t
+# reviewed any apartments or doesn’t exist (or if for any other reason no approximations could
+# be calculated), return an empty list.
 def get_apartment_recommendation(customer_id: int) -> List[Tuple[Apartment, float]]:
     # TODO: implement
     pass
