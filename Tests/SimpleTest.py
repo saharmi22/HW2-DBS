@@ -22,23 +22,18 @@ class Test(AbstractTest):
 
     def test_owner(self):
         try:
-            a = Apartment(1, "kfar hasmacha 177, technion", "haifa", "israel", 50)
-            self.assertEqual(ReturnValue.OK, Solution.add_apartment(a), 'regular apartment')
-            c = Customer(1, "sahar")
-            self.assertEqual(ReturnValue.OK, Solution.add_customer(c), 'regular customer')
-            self.assertEqual(ReturnValue.OK, Solution.customer_made_reservation(1, 1,
-                                                                                date(2024, 3, 10), date(2024, 4, 10),
-                                                                                1300), 'make reservation')
-            # self.assertEqual(ReturnValue.OK, Solution.customer_cancelled_reservation(1, 1, date(2024, 3, 10)))
+            a1 = Apartment(1, "kfar hasmacha 177, technion", "haifa", "israel", 50)
+            a2 = Apartment(2, "armonim 18", "kiryat yam", "Israet", 200)
+            self.assertEqual(ReturnValue.OK, Solution.add_apartment(a1), 'meonot')
+            self.assertEqual(ReturnValue.OK, Solution.add_apartment(a2), 'home')
+            c1 = Customer(1, "sahar")
+            c2 = Customer(2, "itay")
+            self.assertEqual(ReturnValue.OK, Solution.add_customer(c1), 'sahar')
+            self.assertEqual(ReturnValue.OK, Solution.add_customer(c2), 'itay')
             self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(1, 1, date(2024, 3, 11), 8, "this apartment is cool <3" ))
-            o = Owner(2, "itay")
-            self.assertEqual(ReturnValue.OK, Solution.add_owner(o), "owner")
-            self.assertEqual(ReturnValue.OK, Solution.owner_owns_apartment(2, 1), "Owns")
-            self.assertEqual(8.0, Solution.get_owner_rating(2))
-            res = Solution.reservations_per_owner();
-            self.assertEqual(ReturnValue.OK, Solution.best_value_for_money(), "idk")
-
-            res = Solution.get_owner_apartments(2)
+            self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(2, 1, date(2024, 3, 11), 7, "this apartment is cool <3" ))
+            self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(2, 2, date(2024, 1, 25), 7, "wow!"))
+            res = Solution.get_apartment_recommendation(1)
         except Exception as e:
             print(e)
             AbstractTest.tearDown()

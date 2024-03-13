@@ -84,10 +84,24 @@ def create_tables():
                      "FROM ReviewsVal INNER JOIN Apartments ON ReviewsVal.apartment_id = Apartments.id")
         conn.execute("CREATE VIEW ApartmentReviews AS "
                      "SELECT * "
-                     "FROM Apartments "
-                     "INNER JOIN Reviews r1 ON Apartments.id = r1.apartment_id "
-                     "INNER JOIN Reviews r2 ON Apartments.id = r2.apartment_id AND r2.costumer_id != r1.costumer_id "
-                     "INNER JOIN Reviews r3 ON Apartments.id != r3.apartment_id AND r2.costumer_id = r3.costumer_id ")
+                     "FROM Reviews "
+                     "LEFT JOIN  Apartments a1 ON a1.id = Reviews.apartment_id ")
+        conn.execute("CREATE VIEW ApartmentReviews2 as "
+                     "SELECT ApartmentReviews.apartment_id, ApartmentReviews.rating as rating1, "
+                     "ApartmentReviews.address, ApartmentReviews.city, ApartmentReviews.country, "
+                     "ApartmentReviews.size, r2.costumer_id AS second_reviewer, "
+                     "ApartmentReviews.costumer_id AS first_reviewer, r2.rating AS rating2 "
+                     "FROM ApartmentReviews "
+                     "JOIN Reviews r2 ON ApartmentReviews.apartment_id = r2.apartment_id "
+                     "WHERE r2.costumer_id != ApartmentReviews.costumer_id ")
+        conn.execute("CREATE VIEW ApartmentReviews3 as "
+                     "SELECT ApartmentReviews2.first_reviewer, ApartmentReviews2.second_reviewer, "
+                     "ApartmentReviews2.rating1, ApartmentReviews2.rating2, (rating1::float / rating2) as ratio, "
+                     "ApartmentReviews.costumer_id, ApartmentReviews.rating as rating3, ApartmentReviews.apartment_id, "
+                     "ApartmentReviews.address, ApartmentReviews.city, ApartmentReviews.country, ApartmentReviews.size "
+                     "FROM ApartmentReviews JOIN ApartmentReviews2 "
+                     "ON ApartmentReviews2.apartment_id != ApartmentReviews.apartment_id "
+                     "AND ApartmentReviews2.second_reviewer = ApartmentReviews.costumer_id ")
     except Exception as e:
         print(e)
     finally:
@@ -420,11 +434,12 @@ def customer_updated_review(customer_id: int, apartmetn_id: int, update_date: da
     ret_val = ReturnValue.OK
     try:
         conn = Connector.DBConnector()
-        q = "UPDATE Reviews SET review_date = '" + update_date.strftime('%Y-%m-%d') +\
+        q = "UPDATE Reviews SET review_date = '" + update_date.strftime('%Y-%m-%d') + \
             "', rating = " + str(new_rating) + \
             ", review_text = '" + new_text + "'" \
-            " WHERE costumer_id=" + str(customer_id) + " AND apartment_id = " + str(apartmetn_id) + \
-            " AND review_date < '" + update_date.strftime('%Y-%m-%d') +"'"
+                                             " WHERE costumer_id=" + str(customer_id) + " AND apartment_id = " + str(
+            apartmetn_id) + \
+            " AND review_date < '" + update_date.strftime('%Y-%m-%d') + "'"
         conn.execute(q)
     except DatabaseException.NOT_NULL_VIOLATION as e:
         print(e)
@@ -562,9 +577,9 @@ def reservations_per_owner() -> List[Tuple[str, int]]:
     ret_val = []
     try:
         conn = Connector.DBConnector()
-        _ , res = conn.execute("SELECT name, COUNT(apartment_id) "
-                           "FROM OwnerReservations "
-                           "GROUP BY name")
+        _, res = conn.execute("SELECT name, COUNT(apartment_id) "
+                              "FROM OwnerReservations "
+                              "GROUP BY name")
         for row in res:
             ret_val.append((row["name"], row["count"]))
     except Exception as e:
@@ -590,9 +605,9 @@ def best_value_for_money() -> Apartment:
     try:
         conn = Connector.DBConnector()
         _, res = conn.execute("SELECT * "
-                           "FROM ApartmentVal "
-                           "ORDER BY apar_val DESC "
-                           "LIMIT 1")
+                              "FROM ApartmentVal "
+                              "ORDER BY apar_val DESC "
+                              "LIMIT 1")
         ret_val = Apartment(res[0]["id"], res[0]["address"], res[0]["city"],
                             res[0]["country"], res[0]["size"])
     except Exception as e:
@@ -615,24 +630,22 @@ def get_apartment_recommendation(customer_id: int) -> List[Tuple[Apartment, floa
     ret_val = []
     try:
         conn = Connector.DBConnector()
-        res = conn.execute(
-            "SELECT Apartments.id, Apartments.city, Apartments.address, Apartments.country, Apartments.size, "
-            "recommendation"  # choose apartment and recommendation
-            "WHERE recommendation IN"
-            "(SELECT *, AVG(ratio * r3.rating) AS recommendation"  # calculate avg profit  
-            "WHERE ratio IN"
-            "(SELECT *, r1.rating / r2.rating AS ratio"  # calculate ratio
-            "FROM ApartmentReviews"
-            "WHERE r1.costumer_id = " + str(customer_id) +
-            "AND NOT EXISTS (SELECT apartment_id, costumer_id FROM Reservations "
-            "WHERE apartment_id = r3.apartment_id AND costumer_id =" + str(customer_id) + "))))")
+        _, res = conn.execute("SELECT apartment_id, address, city, country, size, "
+                              "AVG(ratio * rating3) as recommendation "
+                              "FROM ApartmentReviews3 "
+                              "WHERE first_reviewer = " + str(customer_id) +
+                              " AND apartment_id NOT IN("
+                              "SELECT apartment_id "
+                              "FROM Reviews "
+                              "WHERE costumer_id = " + str(customer_id) +
+                              ")"
+                              "GROUP BY apartment_id, address, city, country, size")
         for row in res:
-            ret_val.append((Apartment(row["Apartments.id"], row["Apartments.address"], row["Apartments.city"],
-                                      row["Apartments.country"], row["Apartments.size"]), row["recommendation"]))
+            ret_val.append((Apartment(row["apartment_id"], row["address"], row["city"],
+                                      row["country"], row["size"]), row["recommendation"]))
     except Exception as e:
         print(e)
         ret_val = []
     finally:
         conn.close()
         return ret_val
-
