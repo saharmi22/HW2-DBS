@@ -35,6 +35,7 @@ def create_tables():
                      "country TEXT NOT NULL,"
                      "size INTEGER NOT NULL,"
                      "CHECK (size>0), "
+                     "CHECK (id>0), "
                      "UNIQUE (address, city, country))")
         # todo: add dates start date as keys
         # check how to set keys with foreign keys
@@ -49,7 +50,9 @@ def create_tables():
                      "PRIMARY KEY (costumer_id, apartment_id, start_date),"
                      "UNIQUE (apartment_id, start_date),"
                      "CHECK (start_date<end_date),"
-                     "CHECK (total_price>0))")
+                     "CHECK (total_price>0), "
+                     "CHECK (costumer_id>0),"
+                     "CHECK (apartment_id>0)) ")
         # conn.execute("CREATE OR REPLACE FUNCTION check_review(review_date DATE, apartment_id INTEGER, customer_id INTEGER) RETURNS BOOLEAN AS $$ "
         #              "BEGIN "
         #              "DECLARE "
@@ -72,13 +75,19 @@ def create_tables():
                      "FOREIGN KEY (apartment_id) REFERENCES Apartments(id),"
                      "PRIMARY KEY (costumer_id, apartment_id),"
                      "CHECK (rating >= 1),"
-                     "CHECK (rating <= 10))")
+                     "CHECK (rating <= 10), "
+                     "CHECK (costumer_id>0), "
+                     "CHECK (apartment_id>0)) ")
+        
         conn.execute("CREATE TABLE Owns(owner_id INTEGER, "
                      "apartment_id INTEGER,"
                      "UNIQUE (apartment_id),"
                      "FOREIGN KEY (owner_id) REFERENCES Owners(id),"
                      "FOREIGN KEY (apartment_id) REFERENCES Apartments(id),"
-                     "PRIMARY KEY (apartment_id))")
+                     "PRIMARY KEY (apartment_id), "
+                     "CHECK (owner_id>0),"
+                     "CHECK (apartment_id>0)) ")
+        
         conn.execute("CREATE VIEW RatingsOwners AS "
                      "SELECT Owns.owner_id, Owns.apartment_id, Reviews.rating "
                      "FROM Owns INNER JOIN Reviews "
