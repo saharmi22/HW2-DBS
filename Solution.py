@@ -389,6 +389,7 @@ def customer_made_reservation(customer_id: int, apartment_id: int, start_date: d
     ret_val = ReturnValue.OK
     try:
         conn = Connector.DBConnector()
+<<<<<<< HEAD
         n,_=conn.execute(
             "INSERT INTO Reservations(costumer_id, apartment_id, start_date, end_date,total_price) "
             "SELECT " + mystr(customer_id) + ", " + mystr(apartment_id) + ", " + mystr(start_date.strftime('%Y-%m-%d')) + ", " + mystr(end_date.strftime('%Y-%m-%d')) + ", " + mystr(total_price)+
@@ -399,6 +400,12 @@ def customer_made_reservation(customer_id: int, apartment_id: int, start_date: d
         if n == 0:
             #print("Reservation already exists\n\n\n\n\n")
             ret_val= ReturnValue.BAD_PARAMS
+=======
+        conn.execute(
+            "INSERT INTO Reservations VALUES (" + mystr(customer_id) + ", " + mystr(apartment_id) + ", " + mystr(
+                start_date.strftime('%Y-%m-%d')) + ", " + mystr(end_date.strftime('%Y-%m-%d')) + ", " + mystr(
+                total_price) + ")")
+>>>>>>> 2484d7436856689a935087088e21bbb15f91fda0
     except DatabaseException.NOT_NULL_VIOLATION as e:
         print(e)
         ret_val = ReturnValue.BAD_PARAMS
@@ -458,6 +465,7 @@ def customer_reviewed_apartment(customer_id: int, apartment_id: int, review_date
     ret_val = ReturnValue.OK
     try:
         conn = Connector.DBConnector()
+<<<<<<< HEAD
 
         n, res = conn.execute("INSERT INTO Reviews (costumer_id,apartment_id ,review_date ,rating, review_text) "
                               "SELECT " + mystr(customer_id) + ", " + mystr(apartment_id) + ", " + mystr(review_date.strftime('%Y-%m-%d')) + ", " + mystr(rating) + ", " + mystr(review_text)
@@ -465,6 +473,13 @@ def customer_reviewed_apartment(customer_id: int, apartment_id: int, review_date
         #print("\n",review_date,n)
         if n == 0:
             ret_val=ReturnValue.NOT_EXISTS
+=======
+        n, res = conn.execute("INSERT INTO Reviews "
+                              "VALUES (" + mystr(customer_id) + ", " + mystr(apartment_id) + ", " + mystr(
+                              review_date.strftime('%Y-%m-%d')) + ", " + mystr(rating) + ", " + mystr(review_text) + ")")
+        if n == 0:
+            return ReturnValue.BAD_PARAMS
+>>>>>>> 2484d7436856689a935087088e21bbb15f91fda0
     except DatabaseException.NOT_NULL_VIOLATION as e:
         print(e)
         ret_val = ReturnValue.BAD_PARAMS
@@ -495,11 +510,17 @@ def customer_updated_review(customer_id: int, apartment_id: int, update_date: da
         q = "UPDATE Reviews SET review_date = " + mystr(update_date.strftime('%Y-%m-%d')) + \
             ", rating = " + mystr(new_rating) + \
             ", review_text = " + mystr(new_text) + \
+<<<<<<< HEAD
             " WHERE costumer_id=" + mystr(customer_id) + " AND apartment_id = " + mystr(apartment_id) + \
             " AND review_date < " + mystr(update_date.strftime('%Y-%m-%d'))
         n,res=conn.execute(q)
         if n == 0:
             ret_val = ReturnValue.NOT_EXISTS
+=======
+            " WHERE costumer_id=" + mystr(customer_id) + " AND apartment_id = " + mystr(apartmetn_id) + \
+            " AND review_date < " + mystr(update_date.strftime('%Y-%m-%d'))
+        conn.execute(q)
+>>>>>>> 2484d7436856689a935087088e21bbb15f91fda0
     except DatabaseException.NOT_NULL_VIOLATION as e:
         print(e)
         ret_val = ReturnValue.BAD_PARAMS
@@ -572,10 +593,15 @@ def owner_drops_apartment(owner_id: int, apartment_id: int) -> ReturnValue:
         conn = Connector.DBConnector()
         if owner_id < 0:
             return ReturnValue.BAD_PARAMS
+<<<<<<< HEAD
         n,res=conn.execute(
             "DELETE FROM Owns WHERE apartment_id = " + mystr(apartment_id) + " AND owner_id = " + mystr(owner_id))
         if n == 0:
             ret_val = ReturnValue.NOT_EXISTS
+=======
+        conn.execute(
+            "DELETE FROM Owns WHERE apartment_id = " + mystr(apartment_id) + " AND owner_id = " + mystr(owner_id))
+>>>>>>> 2484d7436856689a935087088e21bbb15f91fda0
     except DatabaseException.NOT_NULL_VIOLATION as e:
         print(e)
         ret_val = ReturnValue.BAD_PARAMS
@@ -602,11 +628,18 @@ def get_owner_apartments(owner_id: int) -> List[Apartment]:
     apartments = []
     try:
         conn = Connector.DBConnector()
+<<<<<<< HEAD
         _, res = conn.execute("SELECT T.id, T.address, T.city, T.country, T.size "
                               "FROM (SELECT * FROM Owns INNER JOIN Apartments ON Owns.apartment_id = Apartments.id ) T "
                               "WHERE T.owner_id = " + str(owner_id))
         for row in res:
             #print(Apartment(res["id"], res["address"], res["city"], res["country"], res["size"]),"\n")
+=======
+        _, res = conn.execute("SELECT id, address, city, country, size "
+                              "FROM Owns, Apartments "
+                              "WHERE owner_id = " + str(owner_id))
+        for row in res:
+>>>>>>> 2484d7436856689a935087088e21bbb15f91fda0
             apartments.append(Apartment(res["id"], res["address"], res["city"], res["country"], res["size"]))
     except Exception as e:
         print(e)
@@ -783,4 +816,8 @@ def get_apartment_recommendation(customer_id: int) -> List[Tuple[Apartment, floa
         ret_val = []
     finally:
         conn.close()
+<<<<<<< HEAD
         return ret_val
+=======
+        return ret_val
+>>>>>>> 2484d7436856689a935087088e21bbb15f91fda0
