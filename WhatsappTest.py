@@ -31,7 +31,9 @@ class WhatsappTests(AbstractTest):
     def test_get_customer(self) -> None:
         c1 = Customer(1, 'a1')
         self.assertEqual(ReturnValue.OK, Solution.add_customer(c1), 'regular customer')
+        #print(c1, Solution.get_customer(1), 'get customer')
         self.assertEqual(c1, Solution.get_customer(1), 'get customer')
+        #print(Customer.bad_customer(), "\n",Solution.get_customer(3))
         self.assertEqual(Customer.bad_customer(), Solution.get_customer(3), 'get non-existant customer')
 
     def test_delete_customer(self) -> None:
@@ -306,7 +308,7 @@ class WhatsappTests(AbstractTest):
             2016, 3, 3), 'rating': 3, 'review_text': 'good'}
         self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(**review3), 'add review')
 
-        self.assertEqual(ReturnValue.OK, Solution.owner_owns_apartment(1, 1), 'add ownership')
+        #self.assertEqual(ReturnValue.OK, Solution.owner_owns_apartment(1, 1), 'add ownership')
 
         self.assertEqual(4, Solution.get_apartment_rating(1), 'get apartment rating')
         self.assertEqual(4, Solution.get_apartment_rating(1), 'get apartment rating')
@@ -326,6 +328,7 @@ class WhatsappTests(AbstractTest):
         self.assertEqual(ReturnValue.OK, Solution.add_apartment(apt2), 'add apartment')
         apt3 = Apartment(3, 'test_addr_3', 'test_city', 'test_country', 5)
         self.assertEqual(ReturnValue.OK, Solution.add_apartment(apt3), 'add apartment')
+
 
         res1 = {'customer_id': 1, 'apartment_id': 1, 'start_date': date(
             2013, 1, 1), 'end_date': date(2013, 2, 2), 'total_price': 50}
@@ -349,7 +352,12 @@ class WhatsappTests(AbstractTest):
             2016, 3, 3), 'rating': 3, 'review_text': 'good'}
         self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(**review3), 'add review')
 
+        self.assertEqual(ReturnValue.OK, Solution.owner_owns_apartment(1, 2), 'add ownership')
+        self.assertEqual(ReturnValue.OK, Solution.owner_owns_apartment(1, 1), 'add ownership')
+        self.assertEqual(ReturnValue.OK, Solution.owner_owns_apartment(1, 3), 'add ownership')
+
         self.assertEqual(4, Solution.get_owner_rating(1), 'get owner rating')
+
 
 
 # *** DO NOT RUN EACH TEST MANUALLY ***
