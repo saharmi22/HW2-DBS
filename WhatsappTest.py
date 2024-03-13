@@ -270,6 +270,7 @@ class WhatsappTests(AbstractTest):
         self.assertEqual(ReturnValue.OK, Solution.owner_owns_apartment(1, 2), 'add ownership')
         self.assertEqual(ReturnValue.OK, Solution.owner_owns_apartment(2, 3), 'add ownership')
 
+        #print(Solution.get_owner_apartments(1))
         self.assertEqual([apt1, apt2], Solution.get_owner_apartments(1), 'get owner apartments')
 
 

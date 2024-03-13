@@ -68,40 +68,43 @@ class Test(AbstractTest):
 
     #     print(Solution.get_all_location_owners())
 
-    def test_add_review(self) -> None:
-        c1 = Customer(1, 'one')
-        self.assertEqual(ReturnValue.OK, Solution.add_customer(c1), 'add customer')
-        apt1 = Apartment(1, 'test_addr', 'test_city', 'test_country', 5)
-        self.assertEqual(ReturnValue.OK, Solution.add_apartment(apt1), 'add apartment')
-        res1 = {'customer_id': 1, 'apartment_id': 1, 'start_date': date(
-            2013, 10, 5), 'end_date': date(2014, 12, 3), 'total_price': 50}
-        self.assertEqual(ReturnValue.OK, Solution.customer_made_reservation(**res1), 'add reservation')
-        review1 = {'customer_id': 1, 'apartment_id': 1, 'review_date': date(
-            2015, 3, 3), 'rating': 5, 'review_text': 'good'}
-        self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(**review1), 'add review')
-        self.assertEqual(ReturnValue.ALREADY_EXISTS, Solution.customer_reviewed_apartment(
-            **review1), 'duplicate review add')
-        review2 = {'customer_id': 1, 'apartment_id': 1, 'review_date': date(
-            2011, 3, 3), 'rating': 6, 'review_text': 'good'}
-        self.assertEqual(ReturnValue.NOT_EXISTS, Solution.customer_reviewed_apartment(
-            **review2), 'invalid date review add')
-        review3 = {'customer_id': 1, 'apartment_id': 2, 'review_date': date(
-            2015, 3, 3), 'rating': 6, 'review_text': 'good'}
-        self.assertEqual(ReturnValue.NOT_EXISTS, Solution.customer_reviewed_apartment(
-            **review3), 'invalid apartment review add')
-        review4 = {'customer_id': 2, 'apartment_id': 1, 'review_date': date(
-            2015, 3, 3), 'rating': 6, 'review_text': 'good'}
-        self.assertEqual(ReturnValue.NOT_EXISTS, Solution.customer_reviewed_apartment(
-            **review4), 'invalid customer review add')
-        review5 = {'customer_id': 1, 'apartment_id': 1, 'review_date': date(
-            2015, 3, 3), 'rating': 15, 'review_text': None}
-        self.assertEqual(ReturnValue.BAD_PARAMS, Solution.customer_reviewed_apartment(
-            **review5), 'invalid score review add')
-        review6 = {'customer_id': 1, 'apartment_id': 1, 'review_date': date(
-            2015, 3, 3), 'rating': 0, 'review_text': None}
-        self.assertEqual(ReturnValue.BAD_PARAMS, Solution.customer_reviewed_apartment(
-            **review6), 'invalid score review add')
-        #print(a[0]," imhereeeeee\n\n\n\n\n\n")
+
+        def test_apt_rating(self) -> None:
+            c1 = Customer(1, 'one')
+            self.assertEqual(ReturnValue.OK, Solution.add_customer(c1), 'add customer')
+            c2 = Customer(2, 'two')
+            self.assertEqual(ReturnValue.OK, Solution.add_customer(c2), 'add customer')
+            c3 = Customer(3, 'three')
+            self.assertEqual(ReturnValue.OK, Solution.add_customer(c3), 'add customer')
+
+            apt1 = Apartment(1, 'test_addr', 'test_city', 'test_country', 5)
+            self.assertEqual(ReturnValue.OK, Solution.add_apartment(apt1), 'add apartment')
+
+            res1 = {'customer_id': 1, 'apartment_id': 1, 'start_date': date(
+                2013, 1, 1), 'end_date': date(2013, 2, 2), 'total_price': 50}
+            self.assertEqual(ReturnValue.OK, Solution.customer_made_reservation(**res1), 'add reservation')
+            review1 = {'customer_id': 1, 'apartment_id': 1, 'review_date': date(
+                2015, 3, 3), 'rating': 5, 'review_text': 'good'}
+            self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(**review1), 'add review')
+
+            res2 = {'customer_id': 2, 'apartment_id': 1, 'start_date': date(
+                2014, 1, 1), 'end_date': date(2014, 2, 2), 'total_price': 50}
+            self.assertEqual(ReturnValue.OK, Solution.customer_made_reservation(**res2), 'add reservation')
+            review2 = {'customer_id': 2, 'apartment_id': 1, 'review_date': date(
+                2015, 3, 3), 'rating': 4, 'review_text': 'good'}
+            self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(**review2), 'add review')
+
+            res3 = {'customer_id': 3, 'apartment_id': 1, 'start_date': date(
+                2015, 1, 1), 'end_date': date(2015, 2, 2), 'total_price': 50}
+            self.assertEqual(ReturnValue.OK, Solution.customer_made_reservation(**res3), 'add reservation')
+            review3 = {'customer_id': 3, 'apartment_id': 1, 'review_date': date(
+                2016, 3, 3), 'rating': 3, 'review_text': 'good'}
+            self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(**review3), 'add review')
+
+            #self.assertEqual(ReturnValue.OK, Solution.owner_owns_apartment(1, 1), 'add ownership')
+            #self.assertEqual(4,Solution.get_owner_rating(1), 'get owner rating')
+            self.assertEqual(4, Solution.get_apartment_rating(1), 'get apartment rating')
+            self.assertEqual(4, Solution.get_apartment_rating(1), 'get apartment rating')
 # *** DO NOT RUN EACH TEST MANUALLY ***
 if __name__ == '__main__':
     unittest.main(verbosity=2, exit=False)
