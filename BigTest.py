@@ -275,7 +275,6 @@ class TestCRUD(unittest.TestCase):
 
     def test_BASIC_API(self):
         print("Running Test: test_BASIC_API...")
-        print(get_top_customer(),"\n\n\n\n\n\n\n")
         reservationsPerOwner = reservations_per_owner()
         self.assertEqual(reservationsPerOwner,[])
         self.assertEqual(add_owner(Owner(1,"OA")),ReturnValue.OK)
@@ -346,8 +345,6 @@ class TestCRUD(unittest.TestCase):
         self.assertEqual(customer_made_reservation(13,8,d3,d4,5000),ReturnValue.OK)
         self.assertEqual(customer_made_reservation(13,5,d2,d3,5000),ReturnValue.OK)
         self.assertEqual(customer_made_reservation(14,11,d1,d2,5000),ReturnValue.OK)
-        
-
         self.assertEqual(customer_reviewed_apartment(12,5,d4,5,"Ok"),ReturnValue.OK)
         self.assertEqual(customer_reviewed_apartment(12,7,d4,8,"Ok"),ReturnValue.OK)
         self.assertEqual(customer_reviewed_apartment(12,9,d4,9,"Ok"),ReturnValue.OK)

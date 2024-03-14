@@ -81,21 +81,27 @@ def create_tables():
         
         conn.execute("CREATE TABLE Owns(owner_id INTEGER, "
                      "apartment_id INTEGER,"
+                     "CHECK (apartment_id>0), "
+                     "CHECK (owner_id>0),"
                      "UNIQUE (apartment_id),"
                      "FOREIGN KEY (owner_id) REFERENCES Owners(id),"
                      "FOREIGN KEY (apartment_id) REFERENCES Apartments(id),"
-                     "PRIMARY KEY (apartment_id), "
-                     "CHECK (owner_id>0),"
-                     "CHECK (apartment_id>0)) ")
+                     "PRIMARY KEY (apartment_id))")
+        
+        conn.execute("CREATE VIEW ApartmentsRatingsAverages AS "
+                     "SELECT Apartments.id as apartment_id , COALESCE(AVG(rating),0) as avg_rating "
+                     "FROM Apartments LEFT OUTER JOIN Reviews "
+                     "ON Apartments.id = Reviews.apartment_id "
+                     "GROUP BY Apartments.id")
         
         conn.execute("CREATE VIEW RatingsOwners AS "
-                     "SELECT Owns.owner_id, Owns.apartment_id, Reviews.rating "
-                     "FROM Owns INNER JOIN Reviews "
-                     "ON Owns.apartment_id = Reviews.apartment_id")
-        conn.execute("CREATE VIEW RatingsApartments AS "
-                     "SELECT Apartments.id, Reviews.rating "
-                     "FROM Apartments INNER JOIN Reviews "
-                     "ON Apartments.id = Reviews.apartment_id")
+                     "SELECT Owners.id as owner_id, COALESCE(AVG(avg_rating),0) as owner_avg "
+                     "FROM Owners LEFT OUTER JOIN Owns "
+                     "ON Owners.id = Owns.owner_id "
+                     "LEFT OUTER JOIN ApartmentsRatingsAverages "
+                     "ON ApartmentsRatingsAverages.apartment_id = Owns.apartment_id "
+                     "GROUP BY Owners.id")
+
         conn.execute("CREATE VIEW ApartmentsOfOwner AS "
                      "SELECT Owns.owner_id, Owns.apartment_id, Owners.name "
                      "FROM Owners INNER JOIN Owns "
@@ -104,9 +110,9 @@ def create_tables():
         conn.execute("CREATE VIEW OwnerReservations AS "
                      "SELECT Owners.name, Owns.owner_id, Reservations.costumer_id, Reservations.apartment_id, "
                      "Reservations.start_date, Reservations.end_date, Reservations.total_price "
-                     "FROM Owns INNER JOIN Reservations "
+                     "FROM Owns LEFT OUTER JOIN Reservations "
                      "ON Owns.apartment_id = Reservations.apartment_id "
-                     "INNER JOIN Owners "
+                     "RIGHT OUTER JOIN Owners "
                      "ON Owns.owner_id = Owners.id")
         conn.execute("CREATE VIEW ReservationNightly AS "
                      "SELECT costumer_id, apartment_id, start_date, end_date, total_price, "
@@ -227,6 +233,8 @@ def get_owner(owner_id: int) -> Owner:
 
 
 def delete_owner(owner_id: int) -> ReturnValue:
+    if owner_id <= 0:
+        return ReturnValue.BAD_PARAMS
     conn = None
     ret_val = ReturnValue.OK
     try:
@@ -300,6 +308,8 @@ def get_apartment(apartment_id: int) -> Apartment:
 # todo: lior
 def delete_apartment(apartment_id: int) -> ReturnValue:
     # TODO: implement
+    if apartment_id <= 0:
+        return ReturnValue.BAD_PARAMS
     conn = None
     ret_val = ReturnValue.OK
     try:
@@ -367,6 +377,8 @@ def get_customer(customer_id: int) -> Customer:
 
 # todo: sahar
 def delete_customer(customer_id: int) -> ReturnValue:
+    if customer_id <= 0:
+        return ReturnValue.BAD_PARAMS
     conn = None
     ret_val = ReturnValue.OK
     try:
@@ -434,6 +446,8 @@ def customer_made_reservation(customer_id: int, apartment_id: int, start_date: d
 
 # todo: sahar
 def customer_cancelled_reservation(customer_id: int, apartment_id: int, start_date: date) -> ReturnValue:
+    if customer_id <= 0 or apartment_id <= 0:
+        return ReturnValue.BAD_PARAMS
     conn = None
     ret_val = ReturnValue.OK
     q = "DELETE FROM Reservations WHERE costumer_id =" + mystr(customer_id) + " AND apartment_id =" + mystr(
@@ -471,10 +485,12 @@ def customer_reviewed_apartment(customer_id: int, apartment_id: int, review_date
     ret_val = ReturnValue.OK
     try:
         conn = Connector.DBConnector()
-
+        #x=conn.execute("SELECT * FROM Reservations WHERE costumer_id = " + mystr(customer_id) + " AND apartment_id = " + mystr(apartment_id) + " AND end_date <= " + mystr(review_date.strftime('%Y-%m-%d')))
+        #print(type(x[1]), x[1]["end_date"])
         n, res = conn.execute("INSERT INTO Reviews (costumer_id,apartment_id ,review_date ,rating, review_text) "
                               "SELECT " + mystr(customer_id) + ", " + mystr(apartment_id) + ", " + mystr(review_date.strftime('%Y-%m-%d')) + ", " + mystr(rating) + ", " + mystr(review_text)
-                                + " WHERE EXISTS (SELECT * FROM Reservations WHERE costumer_id = " + mystr(customer_id) + " AND apartment_id = " + mystr(apartment_id) + " AND end_date < " + mystr(review_date.strftime('%Y-%m-%d')) + ")")
+                                + " WHERE EXISTS (SELECT * FROM Reservations WHERE costumer_id = " + mystr(customer_id) + " AND apartment_id = " + mystr(apartment_id) + " AND end_date <= " + mystr(review_date.strftime('%Y-%m-%d')) + ")"
+                                " OR "+mystr(customer_id)+"<=0 OR "+mystr(apartment_id)+"<=0 OR "+mystr(rating)+"<1 OR "+mystr(rating)+">10")
         #print("\n",review_date,n)
         if n == 0:
             ret_val=ReturnValue.NOT_EXISTS
@@ -505,11 +521,12 @@ def customer_updated_review(customer_id: int, apartment_id: int, update_date: da
     ret_val = ReturnValue.OK
     try:
         conn = Connector.DBConnector()
-        q = "UPDATE Reviews SET review_date = " + mystr(update_date.strftime('%Y-%m-%d')) + \
+        q = "UPDATE Reviews SET costumer_id ="+mystr(customer_id)+", apartment_id = "+mystr(apartment_id) +", review_date = " + mystr(update_date.strftime('%Y-%m-%d')) + \
             ", rating = " + mystr(new_rating) + \
             ", review_text = " + mystr(new_text) + \
-            " WHERE costumer_id=" + mystr(customer_id) + " AND apartment_id = " + mystr(apartment_id) + \
-            " AND review_date < " + mystr(update_date.strftime('%Y-%m-%d'))
+            " WHERE (costumer_id=" + mystr(customer_id) + " AND apartment_id = " + mystr(apartment_id) + \
+            " AND review_date <= " + mystr(update_date.strftime('%Y-%m-%d'))+") OR "+mystr(customer_id)+"<=0 OR "+mystr(apartment_id)+"<=0 OR "+mystr(new_rating)+"<1 OR "+mystr(new_rating)+">10"
+        #print(q)
         n,res=conn.execute(q)
         if n == 0:
             ret_val = ReturnValue.NOT_EXISTS
@@ -579,6 +596,8 @@ def get_apartment_owner(apartment_id: int) -> Owner:
 
 
 def owner_drops_apartment(owner_id: int, apartment_id: int) -> ReturnValue:
+    if owner_id <= 0 or apartment_id <= 0:
+        return ReturnValue.BAD_PARAMS
     conn = None
     ret_val = ReturnValue.OK
     try:
@@ -586,7 +605,7 @@ def owner_drops_apartment(owner_id: int, apartment_id: int) -> ReturnValue:
         if owner_id < 0:
             return ReturnValue.BAD_PARAMS
         n,res=conn.execute(
-            "DELETE FROM Owns WHERE apartment_id = " + mystr(apartment_id) + " AND owner_id = " + mystr(owner_id))
+            "DELETE FROM Owns WHERE owner_id = " + mystr(owner_id)+" AND apartment_id = " + mystr(apartment_id))
         if n == 0:
             ret_val = ReturnValue.NOT_EXISTS
     except DatabaseException.NOT_NULL_VIOLATION as e:
@@ -642,12 +661,11 @@ def get_apartment_rating(apartment_id: int) -> float:
     rating = 0
     try:
         conn = Connector.DBConnector()
-        res = conn.execute("SELECT AVG(rating) FROM RatingsApartments WHERE id = " + mystr(apartment_id))
+        n,res = conn.execute("SELECT avg_rating FROM ApartmentsRatingsAverages WHERE apartment_id = " + mystr(apartment_id))
         # WHERE apartment_id = " + mystr(apartment_id))
-        #print("x:",res[1],":x")
-        rating = res[1]["AVG"][0]
-        if rating is None:
-            rating = 0
+        #print(type(res))
+        #print(n)
+        rating = float(res["avg_rating"][0])
     except Exception as e:
         print(e)
     finally:
@@ -661,9 +679,12 @@ def get_owner_rating(owner_id: int) -> float:
     ret_val = 0
     try:
         conn = Connector.DBConnector()
-        res = conn.execute("SELECT AVG(rating) FROM RatingsOwners WHERE owner_id = " + mystr(owner_id))
+        #print(conn.execute("SELECT * FROM ApartmentsRatingsAverages")[1])
+        n,res = conn.execute("SELECT * FROM RatingsOwners WHERE owner_id = " + mystr(owner_id))
+
+        #print(res)         
         #print(res[1],res[1]["AVG"])
-        ret_val = res[1]["AVG"][0]
+        ret_val = float(res["owner_avg"][0])
         if ret_val is None:
             ret_val = 0
     except Exception as e:
@@ -681,12 +702,13 @@ def get_top_customer() -> Customer:
     customer = Customer.bad_customer()
     try:
         conn = Connector.DBConnector()
-        n, res = conn.execute("Select owner_id, name "
-                              "FROM ApartmentsOfOwner INNER JOIN Reservations "
-                              "ON ApartmentsOfOwner.apartment_id = Reservations.apartment_id "
-                              "ORDER BY COUNT(Reservations.costumer_id) DESC, ApartmentsOfOwner.owner_id ASC")
+        n, res = conn.execute("SELECT id, name "
+                              "FROM Costumers INNER JOIN Reservations "
+                              "ON Costumers.id = Reservations.costumer_id "
+                              "GROUP BY id, name "
+                              "ORDER BY COUNT(id) DESC, id ASC")
         if res.size() > 0:
-            customer = Customer(res[0])
+            customer = Customer(res[0]["id"], res[0]["name"])
     except Exception as e:
         print(e)
     finally:
@@ -700,10 +722,11 @@ def reservations_per_owner() -> List[Tuple[str, int]]:
     ret_val = []
     try:
         conn = Connector.DBConnector()
-        _, res = conn.execute("SELECT name, COUNT(apartment_id) "
-                              "FROM OwnerReservations "
-                              "GROUP BY name")
+        _, res = conn.execute("SELECT name, COALESCE(COUNT(apartment_id),0) AS count "
+                              "FROM OwnerReservations GROUP BY name")
+        #print("X:",res,":X")
         for row in res:
+            #print(row,"hereeeeeeeee")
             ret_val.append((row["name"], row["count"]))
     except Exception as e:
         print(e)
@@ -722,14 +745,16 @@ def get_all_location_owners() -> List[Owner]:
     owners = []
     try:
         conn = Connector.DBConnector()
-        n, res = conn.execute("SELECT T.owner_id, T.name "
+        n, res = conn.execute("SELECT T.owner_id, T.name, T.count "
                               "FROM ( "
-                              "SELECT owner_id, name, COUNT(DISTINCT city) AS count "
+                              "SELECT owner_id, name, COUNT(DISTINCT (city,country)) AS count "
                               "FROM ApartmentsOfOwner INNER JOIN Apartments "
                               "ON ApartmentsOfOwner.apartment_id = Apartments.id "
-                              "GROUP BY owner_id, name) AS T WHERE T.count = (SELECT COUNT(DISTINCT city) FROM Apartments ) ")
+                              "GROUP BY owner_id, name) AS T WHERE T.count = (SELECT COUNT(DISTINCT (city,country)) FROM Apartments) ")
+        #print(res)
         for row in res:
-            owners.append(Owner(row))
+            owners.append(Owner(row["owner_id"], row["name"]))
+            #print(Owner(row))
     except Exception as e:
         print(e)
     finally:

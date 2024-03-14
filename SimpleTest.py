@@ -67,44 +67,156 @@ class Test(AbstractTest):
 
 
     #     print(Solution.get_all_location_owners())
+         
+    def test_Advanced_API(self):
+        print("Running Test: test_Advanced_API...")
+        self.assertEqual(add_owner(Owner(1,"OA")),ReturnValue.OK)
+        self.assertEqual(add_owner(Owner(2,"OB")),ReturnValue.OK)
+        self.assertEqual(add_owner(Owner(3,"OC")),ReturnValue.OK)
+        self.assertEqual(add_owner(Owner(4,"OD")),ReturnValue.OK)
+        self.assertEqual(add_customer(Customer(12,"CA")),ReturnValue.OK)
+        self.assertEqual(add_customer(Customer(13,"CB")),ReturnValue.OK)
+        self.assertEqual(add_customer(Customer(14,"CC")),ReturnValue.OK)
+        self.assertEqual(add_customer(Customer(15,"CD")),ReturnValue.OK)
+        self.assertEqual(add_apartment(Apartment(5, "RA", "Haifa", "ISR", 80)), ReturnValue.OK) #
+        self.assertEqual(add_apartment(Apartment(6, "RB", "Haifa", "ISR", 80)), ReturnValue.OK) #
+        self.assertEqual(add_apartment(Apartment(7, "RC", "Akko", "ISR", 80)), ReturnValue.OK) #
+        self.assertEqual(add_apartment(Apartment(8, "RD", "Nahariya", "ISR", 80)), ReturnValue.OK) #
+        self.assertEqual(add_apartment(Apartment(9, "RE", "Haifa", "Canada", 80)), ReturnValue.OK)  #
+        self.assertEqual(add_apartment(Apartment(10, "RF", "Akko", "Canada", 80)), ReturnValue.OK) #
+        self.assertEqual(add_apartment(Apartment(11, "RG", "Toronto", "Canada", 80)), ReturnValue.OK) #
+
+        self.assertEqual(get_all_location_owners(),[])
+        self.assertEqual(owner_owns_apartment(1,5),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[])
+        self.assertEqual(owner_owns_apartment(1,7),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[])
+        self.assertEqual(owner_owns_apartment(1,8),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[])
+        self.assertEqual(owner_owns_apartment(1,11),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[])
+        self.assertEqual(owner_owns_apartment(1,10),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[])
+        self.assertEqual(owner_owns_apartment(1,9),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[Owner(1,"OA")])
+
+        self.assertEqual(add_apartment(Apartment(20, "RH", "Toronto", "Canada", 80)), ReturnValue.OK) 
+        self.assertEqual(add_apartment(Apartment(21, "RI", "Akko", "Canada", 80)), ReturnValue.OK)
+        self.assertEqual(add_apartment(Apartment(22, "RJ", "Akko", "Canada", 80)), ReturnValue.OK)
+        self.assertEqual(add_apartment(Apartment(23, "Rk", "Nahariya", "ISR", 80)), ReturnValue.OK) 
+        self.assertEqual(add_apartment(Apartment(24, "RL", "Haifa", "Canada", 80)), ReturnValue.OK) 
+        self.assertEqual(add_apartment(Apartment(25, "RM", "Akko", "ISR", 80)), ReturnValue.OK) 
+        self.assertEqual(owner_owns_apartment(2,6),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[Owner(1,"OA")])
+        self.assertEqual(owner_owns_apartment(2,20),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[Owner(1,"OA")])
+        self.assertEqual(owner_owns_apartment(2,21),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[Owner(1,"OA")])
+        self.assertEqual(owner_owns_apartment(2,23),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[Owner(1,"OA")])
+        self.assertEqual(owner_owns_apartment(2,25),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[Owner(1,"OA")])
+        self.assertEqual(owner_owns_apartment(2,24),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[Owner(1,"OA"),Owner(2,"OB")])
+        self.assertEqual(add_apartment(Apartment(26, "RN", "Metola", "ISR", 80)), ReturnValue.OK) 
+        self.assertEqual(get_all_location_owners(),[])
+        self.assertEqual(owner_owns_apartment(2,26),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[Owner(2,"OB")])
+        self.assertEqual(add_apartment(Apartment(27, "RO", "Metola", "ISR", 80)), ReturnValue.OK) 
+        self.assertEqual(owner_owns_apartment(1,27),ReturnValue.OK)
+        self.assertEqual(get_all_location_owners(),[Owner(1,"OA"),Owner(2,"OB")])
+
+        # --------------------------------------- PROFIT TEST START --------------------------------------- #
+        profitPerMonth : List[Tuple[int, float]] = []
+        for i in range(1,13):
+            profitPerMonth.append((i,0))
+
+        self.assertEqual(profit_per_month(2023),profitPerMonth)
+        self.assertEqual(profit_per_month(2024),profitPerMonth)
+        # January   
+        d1 = date(2023,1,10)
+        d2 = date(2023,1,20)
+        d3 = date(2023,1,22)
+        d4 = date(2023,1,27)
+        self.assertEqual(customer_made_reservation(12,5,d1,d2,1000),ReturnValue.OK) #100 per night
+        profitPerMonth[0] = (1,1000*0.15)
+        self.assertEqual(profit_per_month(2023),profitPerMonth)
+        self.assertEqual(best_value_for_money(),Apartment(5, "RA", "Haifa", "ISR", 80))
+        self.assertEqual(customer_made_reservation(12,6,d3,d4,2000),ReturnValue.OK) #400 per night
+        profitPerMonth[0] = (1,3000*0.15)
+        self.assertEqual(profit_per_month(2023),profitPerMonth)
+
+        # March
+        d5 = date(2023,3,15)
+        d6 = date(2023,3,19)
+        self.assertEqual(customer_made_reservation(13,5,d5,d6,2000),ReturnValue.OK) #500 per night
+        profitPerMonth[2] = (3,2000*0.15)
+        self.assertEqual(profit_per_month(2023),profitPerMonth)
+
+        #April
+        d7 = date(2023,4,1)
+        d8 = date(2023,4,5)
+        d9 = date(2023,4,10)
+        d10 = date(2023,4,15)
+        d11 = date(2023,4,20)
+        d12 = date(2023,5,1)
+        self.assertEqual(customer_made_reservation(12,8,d7,d8,4000),ReturnValue.OK) #1000 per night
+        profitPerMonth[3] = (4,4000*0.15)
+        self.assertEqual(profit_per_month(2023),profitPerMonth)
+        self.assertEqual(customer_made_reservation(12,8,d9,d10,3000),ReturnValue.OK) #600 per night
+        profitPerMonth[3] = (4,7000*0.15)
+        self.assertEqual(profit_per_month(2023),profitPerMonth)
+        self.assertEqual(customer_made_reservation(12,8,d11,d12,2000),ReturnValue.OK) #200 per night
+        profitPerMonth[4] = (5,2000*0.15)
+        self.assertEqual(profit_per_month(2023),profitPerMonth)
+
+        # June + July
+        d13 = date(2023,6,10)
+        d14 = date(2023,6,15)
+        d15 = date(2023,7,15)
+        self.assertEqual(customer_made_reservation(12,9,d13,d14,8000),ReturnValue.OK) #1600 per night
+        profitPerMonth[5] = (6,8000*0.15)
+        self.assertEqual(profit_per_month(2023),profitPerMonth)
+        self.assertEqual(customer_made_reservation(12,9,d14,d15,6720),ReturnValue.OK) #224 per night
+        profitPerMonth[6] = (7,6720*0.15)
+        self.assertEqual(profit_per_month(2023),profitPerMonth)
 
 
-        def test_apt_rating(self) -> None:
-            c1 = Customer(1, 'one')
-            self.assertEqual(ReturnValue.OK, Solution.add_customer(c1), 'add customer')
-            c2 = Customer(2, 'two')
-            self.assertEqual(ReturnValue.OK, Solution.add_customer(c2), 'add customer')
-            c3 = Customer(3, 'three')
-            self.assertEqual(ReturnValue.OK, Solution.add_customer(c3), 'add customer')
+        #Jan 2024
+        d16 = date(2024,1,1)
+        d17 = date(2024,1,11)
+        self.assertEqual(customer_made_reservation(14,9,d16,d17,10000),ReturnValue.OK) #1000 per night
+        self.assertEqual(profit_per_month(2023),profitPerMonth)
+        profitPerMonth = []
+        for i in range(1,13):
+            profitPerMonth.append((i,0))
+        profitPerMonth[0] = (1,10000*0.15)
+        self.assertEqual(profit_per_month(2024),profitPerMonth)
 
-            apt1 = Apartment(1, 'test_addr', 'test_city', 'test_country', 5)
-            self.assertEqual(ReturnValue.OK, Solution.add_apartment(apt1), 'add apartment')
+        # --------------------------------------- PROFIT TEST END --------------------------------------- #
+        d18 = date(2025,1,1)
+        self.assertEqual(customer_reviewed_apartment(12,6,d18,4,"ok"),ReturnValue.OK)
+        self.assertEqual(best_value_for_money(),Apartment(6, "RB", "Haifa", "ISR", 80))
+        self.assertEqual(customer_reviewed_apartment(12,9,d18,10,"ok"),ReturnValue.OK)
+        self.assertEqual(best_value_for_money(),Apartment(9, "RE", "Haifa", "Canada", 80))
+        self.assertEqual(customer_reviewed_apartment(14,9,d18,6,"ok"),ReturnValue.OK)
+        self.assertEqual(best_value_for_money(),Apartment(6, "RB", "Haifa", "ISR", 80))
+        self.assertEqual(customer_reviewed_apartment(12,8,d18,10,"ok"),ReturnValue.OK)
+        self.assertEqual(best_value_for_money(),Apartment(8, "RD", "Nahariya", "ISR", 80))
+        self.assertEqual(customer_reviewed_apartment(13,5,d18,8,"ok"),ReturnValue.OK)
+        self.assertEqual(best_value_for_money(),Apartment(5, "RA", "Haifa", "ISR", 80))
+        self.assertEqual(customer_reviewed_apartment(12,5,d18,10,"ok"),ReturnValue.OK)
+        self.assertEqual(best_value_for_money(),Apartment(5, "RA", "Haifa", "ISR", 80))
+        self.assertEqual(add_apartment(Apartment(1,'A','A','A',10000)),ReturnValue.OK)
+        self.assertEqual(add_customer(Customer(1,'CCCA')),ReturnValue.OK)
+        dAAA1 = date(2022,2,2)
+        dAAA2 = date(2022,2,5)
+        self.assertEqual(customer_made_reservation(1,1,dAAA1,dAAA2,900),ReturnValue.OK)
+        self.assertEqual(customer_reviewed_apartment(1,1,dAAA2,10,"YA"),ReturnValue.OK)
+        self.assertEqual(best_value_for_money(),Apartment(1,'A','A','A',10000))
 
-            res1 = {'customer_id': 1, 'apartment_id': 1, 'start_date': date(
-                2013, 1, 1), 'end_date': date(2013, 2, 2), 'total_price': 50}
-            self.assertEqual(ReturnValue.OK, Solution.customer_made_reservation(**res1), 'add reservation')
-            review1 = {'customer_id': 1, 'apartment_id': 1, 'review_date': date(
-                2015, 3, 3), 'rating': 5, 'review_text': 'good'}
-            self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(**review1), 'add review')
+        print("// ==== test_Advanced_API: SUCCESS! ==== //")
 
-            res2 = {'customer_id': 2, 'apartment_id': 1, 'start_date': date(
-                2014, 1, 1), 'end_date': date(2014, 2, 2), 'total_price': 50}
-            self.assertEqual(ReturnValue.OK, Solution.customer_made_reservation(**res2), 'add reservation')
-            review2 = {'customer_id': 2, 'apartment_id': 1, 'review_date': date(
-                2015, 3, 3), 'rating': 4, 'review_text': 'good'}
-            self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(**review2), 'add review')
-
-            res3 = {'customer_id': 3, 'apartment_id': 1, 'start_date': date(
-                2015, 1, 1), 'end_date': date(2015, 2, 2), 'total_price': 50}
-            self.assertEqual(ReturnValue.OK, Solution.customer_made_reservation(**res3), 'add reservation')
-            review3 = {'customer_id': 3, 'apartment_id': 1, 'review_date': date(
-                2016, 3, 3), 'rating': 3, 'review_text': 'good'}
-            self.assertEqual(ReturnValue.OK, Solution.customer_reviewed_apartment(**review3), 'add review')
-
-            #self.assertEqual(ReturnValue.OK, Solution.owner_owns_apartment(1, 1), 'add ownership')
-            #self.assertEqual(4,Solution.get_owner_rating(1), 'get owner rating')
-            self.assertEqual(4, Solution.get_apartment_rating(1), 'get apartment rating')
-            self.assertEqual(4, Solution.get_apartment_rating(1), 'get apartment rating')
 # *** DO NOT RUN EACH TEST MANUALLY ***
 if __name__ == '__main__':
     unittest.main(verbosity=2, exit=False)
