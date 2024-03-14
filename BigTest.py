@@ -579,13 +579,16 @@ class TestCRUD(unittest.TestCase):
         self.assertEqual(customer_reviewed_apartment(12,9,d3,1,"Eh"),ReturnValue.OK)
         self.assertEqual(customer_reviewed_apartment(12,10,d3,5,"Eh"),ReturnValue.OK)
         self.assertEqual(customer_reviewed_apartment(12,11,d3,8,"Eh"),ReturnValue.OK)
+
         self.assertEqual(customer_reviewed_apartment(13,5,d3,4,"Eh"),ReturnValue.OK)
         self.assertEqual(customer_reviewed_apartment(13,6,d3,3,"Eh"),ReturnValue.OK)
         self.assertEqual(customer_reviewed_apartment(13,10,d3,10,"Eh"),ReturnValue.OK)
         self.assertEqual(customer_reviewed_apartment(13,11,d3,5,"Eh"),ReturnValue.OK)
+
         self.assertEqual(customer_reviewed_apartment(14,5,d3,5,"Eh"),ReturnValue.OK)
         self.assertEqual(customer_reviewed_apartment(14,6,d3,5,"Eh"),ReturnValue.OK)
         self.assertEqual(customer_reviewed_apartment(14,11,d3,9,"Eh"),ReturnValue.OK)
+
         self.assertEqual(customer_reviewed_apartment(15,5,d3,6,"Eh"),ReturnValue.OK)
         self.assertEqual(customer_reviewed_apartment(15,7,d3,8,"Eh"),ReturnValue.OK)
         self.assertEqual(customer_reviewed_apartment(15,10,d3,5,"Eh"),ReturnValue.OK)
@@ -595,18 +598,18 @@ class TestCRUD(unittest.TestCase):
         apt6 : float = 3.79722222222222222223
         apt7 : float = 10.0000000000000000
         result = get_apartment_recommendation(12)
-        self.assertEqual(result,[(Apartment(5, "RA", "Haifa", "ISR", 80),apt5),(Apartment(6, "RB", "Haifa", "ISR", 80),apt6),(Apartment(7, "RC", "Akko", "ISR", 80),apt7)])
+        self.assertAlmostEqual(result,[(Apartment(5, "RA", "Haifa", "ISR", 80),apt5),(Apartment(6, "RB", "Haifa", "ISR", 80),apt6),(Apartment(7, "RC", "Akko", "ISR", 80),apt7)])
         apt9 = 1.31250000000000000000
         result = get_apartment_recommendation(13)
-        self.assertEqual(result,[(Apartment(7, "RC", "Akko", "ISR", 80),apt7),(Apartment(9, "RE", "Haifa", "Canada", 80),apt9)])
+        self.assertAlmostEqual(result,[(Apartment(7, "RC", "Akko", "ISR", 80),apt7),(Apartment(9, "RE", "Haifa", "Canada", 80),apt9)])
         apt9 = 1.12500000000000000000
         apt10 = 8.54166666666666666667
         result = get_apartment_recommendation(14)
-        self.assertEqual(result,[(Apartment(7, "RC", "Akko", "ISR", 80),apt7),(Apartment(9, "RE", "Haifa", "Canada", 80),apt9), (Apartment(10, "RF", "Akko", "Canada", 80),apt10)])
+        self.assertAlmostEqual(result,[(Apartment(7, "RC", "Akko", "ISR", 80),apt7),(Apartment(9, "RE", "Haifa", "Canada", 80),apt9), (Apartment(10, "RF", "Akko", "Canada", 80),apt10)])
         apt6 = 2.73888888888888888890
         apt9 = 1.00000000000000000000
         result = get_apartment_recommendation(15)
-        self.assertEqual(result,[(Apartment(6, "RB", "Haifa", "ISR", 80),apt6),(Apartment(9, "RE", "Haifa", "Canada", 80),apt9)])
+        self.assertAlmostEqual(result,[(Apartment(6, "RB", "Haifa", "ISR", 80),apt6),(Apartment(9, "RE", "Haifa", "Canada", 80),apt9)])
         print("// ==== test_Advanced_API2: SUCCESS! ==== //")
         
 

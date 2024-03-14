@@ -825,18 +825,34 @@ def get_apartment_recommendation(customer_id: int) -> List[Tuple[Apartment, floa
     ret_val = []
     try:
         conn = Connector.DBConnector()
-        _, res = conn.execute("SELECT apartment_id, address, city, country, size, "
-                              "AVG(ratio * rating3) as recommendation "
-                              "FROM ApartmentReviews3 "
-                              "WHERE first_reviewer = " + str(customer_id) +
-                              " AND apartment_id NOT IN("
-                              "SELECT apartment_id "
-                              "FROM Reviews "
-                              "WHERE costumer_id = " + str(customer_id) +
-                              ")"
-                              "GROUP BY apartment_id, address, city, country, size")
+        #q = "SELECT apartment_id, address, city, country, size, AVG(avg_ratio * rating3) as recommendation FROM ApartmentReview3 LEFT JOIN (SELECT first reviewer, second_reviewer, avg(ratio) as avg_ratio FROM ApartmentReview3 GROUP BY first_reviewer, second_reviewer) as avg_ratios ON avg_ratios.second_reviewer = ApartmentReview3.second_reviewer WHERE first_reviewer = " + str(customer_id) + " GROUP BY apartment_id, address, city, country, size"
+        q = "SELECT dd.apartment_id as id, dd.address, dd.city, dd.country, dd.size, AVG(GREATEST(LEAST(avg_ratio*rating, 10::float),1::float)) AS recommendation " \
+            " FROM(" \
+                " SELECT apartmentreviews3.apartment_id, apartmentreviews3.second_reviewer, avg_ratio, apartmentreviews3.address, apartmentreviews3.city, apartmentreviews3.country, apartmentreviews3.size ,AVG(rating3) as rating" \
+                " FROM apartmentreviews3 LEFT JOIN (" \
+                    " SELECT first_reviewer, second_reviewer, avg(ratio) as avg_ratio " \
+                    " FROM apartmentreviews3 " \
+                    " GROUP BY first_reviewer, second_reviewer" \
+                " ) as avg_ratios " \
+                " ON avg_ratios.second_reviewer = apartmentreviews3.second_reviewer AND avg_ratios.first_reviewer = apartmentreviews3.first_reviewer" \
+                " WHERE apartmentreviews3.first_reviewer = "+mystr(customer_id)+" and apartmentreviews3.apartment_id not in(" \
+                    " SELECT apartment_id FROM Reviews WHERE costumer_id = "+mystr(customer_id)+")" \
+                " GROUP BY apartmentreviews3.apartment_id, apartmentreviews3.second_reviewer, avg_ratio, apartmentreviews3.address, apartmentreviews3.city, apartmentreviews3.country, apartmentreviews3.size) as dd" \
+            " GROUP BY dd.apartment_id, dd.address, dd.city, dd.country, dd.size"
+        _, res = conn.execute(q)
+
+        # _, res = conn.execute("SELECT apartment_id, address, city, country, size,"
+        #                      "AVG(ratio * rating3) as recommendation "
+        #                      "FROM ApartmentReviews3 "
+        #                      "WHERE first_reviewer = " + str(customer_id) +
+        #                      " AND apartment_id NOT IN("
+        #                      "SELECT apartment_id "
+        #                      "FROM Reviews "
+        #                      "WHERE costumer_id = " + str(customer_id) +
+        #                      ")"
+        #                      "GROUP BY apartment_id, address, city, country, size")
         for row in res:
-            ret_val.append((Apartment(row["apartment_id"], row["address"], row["city"],
+            ret_val.append((Apartment(row["id"], row["address"], row["city"],
                                       row["country"], row["size"]), row["recommendation"]))
     except Exception as e:
         print(e)
