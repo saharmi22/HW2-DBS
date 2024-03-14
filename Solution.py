@@ -853,7 +853,7 @@ def get_apartment_recommendation(customer_id: int) -> List[Tuple[Apartment, floa
         #                      "GROUP BY apartment_id, address, city, country, size")
         for row in res:
             ret_val.append((Apartment(row["id"], row["address"], row["city"],
-                                      row["country"], row["size"]), row["recommendation"]))
+                                      row["country"], row["size"]), float(row["recommendation"])))
     except Exception as e:
         print(e)
         ret_val = []
