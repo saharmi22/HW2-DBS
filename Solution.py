@@ -92,7 +92,7 @@ def create_tables():
                      "SELECT Apartments.id as apartment_id , COALESCE(AVG(rating),0) as avg_rating "
                      "FROM Apartments LEFT OUTER JOIN Reviews "
                      "ON Apartments.id = Reviews.apartment_id "
-                     "GROUP BY Apartments.id")
+                     " GROUP BY Apartments.id")
         
         conn.execute("CREATE VIEW RatingsOwners AS "
                      "SELECT Owners.id as owner_id, COALESCE(AVG(avg_rating),0) as owner_avg "
@@ -116,17 +116,18 @@ def create_tables():
                      "ON Owns.owner_id = Owners.id")
         conn.execute("CREATE VIEW ReservationNightly AS "
                      "SELECT costumer_id, apartment_id, start_date, end_date, total_price, "
-                     "(end_date - start_date) - 1 AS nights,"
-                     "total_price / ((end_date - start_date) - 1) AS nightly_price "
+                     "(end_date - start_date)::float AS nights,"
+                     "total_price / ((end_date - start_date)) AS nightly_price "
                      "FROM Reservations;")
         conn.execute("CREATE VIEW ReviewsVal AS "
-                     "SELECT Reviews.costumer_id, Reviews.apartment_id, "
-                     "Reviews.rating::float / ReservationNightly.nightly_price as apar_val "
-                     "FROM ReservationNightly INNER JOIN Reviews "
-                     "ON Reviews.apartment_id = ReservationNightly.apartment_id")
+                     "SELECT ReservationNightly.apartment_id, "
+                     "AVG(ApartmentsRatingsAverages.avg_rating) / AVG(ReservationNightly.nightly_price::float) as apar_val "
+                     "FROM ReservationNightly INNER JOIN ApartmentsRatingsAverages "
+                     "ON ReservationNightly.apartment_id = ApartmentsRatingsAverages.apartment_id "
+                     "GROUP BY ReservationNightly.apartment_id")
         conn.execute("CREATE VIEW ApartmentVal AS "
                      "SELECT Apartments.id, Apartments.address, Apartments,city, Apartments.country, "
-                     "Apartments.size, ReviewsVal.apar_val "
+                     "Apartments.size, COALESCE(ReviewsVal.apar_val,0) as apar_val "
                      "FROM ReviewsVal INNER JOIN Apartments ON ReviewsVal.apartment_id = Apartments.id")
         conn.execute("CREATE VIEW ApartmentReviews AS "
                      "SELECT * "
@@ -153,6 +154,8 @@ def create_tables():
     finally:
         # will happen any way after try termination or exception handling
         conn.close()
+
+        
 
 
 def clear_tables():
@@ -192,6 +195,19 @@ def drop_tables():
     except Exception as e:
         print(e)
 
+
+# def sub_date() :
+#     conn=None
+#     try:
+#         conn = Connector.DBConnector()
+#         n,res=conn.execute("SELECT * "
+#                               "FROM ReviewsVal")
+#         #print("x:",(res),":x")
+#     except Exception as e:
+#         print(e)
+#     finally:
+#         conn.close()
+#         #return d
 
 def add_owner(owner: Owner) -> ReturnValue:
     conn = None
@@ -774,6 +790,7 @@ def best_value_for_money() -> Apartment:
                               "LIMIT 1")
         ret_val = Apartment(res[0]["id"], res[0]["address"], res[0]["city"],
                             res[0]["country"], res[0]["size"])
+        #print(ret_val)  
     except Exception as e:
         print(e)
         ret_val = Apartment.bad_apartment()

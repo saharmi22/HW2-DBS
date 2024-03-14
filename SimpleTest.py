@@ -16,6 +16,7 @@ from datetime import date, datetime
 
 
 class Test(AbstractTest):
+    # d?print(Solution.sub_date())
     # def test_customer(self) -> None:
     #    c1 = Customer(1, 'a1')
     #    self.assertEqual(ReturnValue.OK, Solution.add_customer(c1), 'regular customer')
@@ -200,7 +201,9 @@ class Test(AbstractTest):
         self.assertEqual(customer_reviewed_apartment(12,9,d18,10,"ok"),ReturnValue.OK)
         self.assertEqual(best_value_for_money(),Apartment(9, "RE", "Haifa", "Canada", 80))
         self.assertEqual(customer_reviewed_apartment(14,9,d18,6,"ok"),ReturnValue.OK)
+        #Solution.sub_date()
         self.assertEqual(best_value_for_money(),Apartment(6, "RB", "Haifa", "ISR", 80))
+        
         self.assertEqual(customer_reviewed_apartment(12,8,d18,10,"ok"),ReturnValue.OK)
         self.assertEqual(best_value_for_money(),Apartment(8, "RD", "Nahariya", "ISR", 80))
         self.assertEqual(customer_reviewed_apartment(13,5,d18,8,"ok"),ReturnValue.OK)
